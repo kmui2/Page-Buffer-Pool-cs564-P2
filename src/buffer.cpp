@@ -34,6 +34,8 @@ BufMgr::BufMgr(std::uint32_t bufs)
 	hashTable = new BufHashTbl(htsize); // allocate the buffer hash table
 
 	clockHand = bufs - 1;
+
+	
 }
 
 BufMgr::~BufMgr()
@@ -50,18 +52,70 @@ BufMgr::~BufMgr()
 
 void BufMgr::advanceClock()
 {
+	clockHand = (clockHand + 1) % numBufs;
+
 }
 
 void BufMgr::allocBuf(FrameId &frame)
 {
+	throw new BufferExceededException();
 }
 
 void BufMgr::readPage(File *file, const PageId pageNo, Page *&page)
 {
+	badgerdb::Page new_page;
+	const badgerdb::RecordId& rid = new_page.insertRecord("hello, world!");
+	new_page.getRecord(rid); // returns "hello, world!"
+
+	FrameId frameNo = 0;
+	try { 
+		hashTable->lookup(file, pageNo, frameNo);
+		bufDescTable[frameNo].refbit = false;
+		bufDescTable[frameNo].pinCnt++;
+		*page = bufPool[frameNo];
+	}
+	catch (...){
+		allocBuf(frameNo);
+		bufPool[frameNo] = file->readPage(pageNo);
+		hashTable->insert(file, pageNo, frameNo);
+		bufDescTable[frameNo].Set(file, pageNo);
+		*page = bufPool[frameNo];
+	}
+	// catch (HashNotFoundException e) {
+
+	// }
+	
+	try {
+		*page = file->readPage(pageNo);
+		uint32_t i;
+		for (i = 0; i < numBufs; i++) {
+
+		}
+	
+	}
+	catch (...){
+
+	}
+	// catch (InvalidPageException e) {
+	// }
+
 }
 
 void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 {
+	try { 
+		FrameId frameNo = 0;
+		hashTable->lookup(file, pageNo, frameNo);
+		if (dirty) {
+			bufDescTable[frameNo].dirty = true;
+		}
+		if (bufDescTable[frameNo].pinCnt == 0) {
+			throw new PageNotPinnedException(file->filename(), bufDescTable[frameNo].pageNo, frameNo);
+		}
+	}
+	catch (...){
+	}
+
 }
 
 void BufMgr::flushFile(const File *file)
