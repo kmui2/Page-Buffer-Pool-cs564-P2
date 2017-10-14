@@ -13,6 +13,9 @@
 #include "exceptions/page_pinned_exception.h"
 #include "exceptions/bad_buffer_exception.h"
 #include "exceptions/hash_not_found_exception.h"
+#include "exceptions/invalid_page_exception.h"
+#include "file_iterator.h"
+
 
 namespace badgerdb
 {
@@ -73,29 +76,27 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *&page)
 		bufDescTable[frameNo].refbit = false;
 		bufDescTable[frameNo].pinCnt++;
 		*page = bufPool[frameNo];
+
 	}
-	catch (...){
+	catch (HashNotFoundException e){
 		allocBuf(frameNo);
 		bufPool[frameNo] = file->readPage(pageNo);
 		hashTable->insert(file, pageNo, frameNo);
 		bufDescTable[frameNo].Set(file, pageNo);
 		*page = bufPool[frameNo];
 	}
-	// catch (HashNotFoundException e) {
+	
+	// try {
+	// 	*page = file->readPage(pageNo);
+	// 	uint32_t i;
+	// 	for (i = 0; i < numBufs; i++) {
+
+	// 	}
+	
+	// }
+	// catch (...){
 
 	// }
-	
-	try {
-		*page = file->readPage(pageNo);
-		uint32_t i;
-		for (i = 0; i < numBufs; i++) {
-
-		}
-	
-	}
-	catch (...){
-
-	}
 	// catch (InvalidPageException e) {
 	// }
 
@@ -112,14 +113,41 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 		if (bufDescTable[frameNo].pinCnt == 0) {
 			throw new PageNotPinnedException(file->filename(), bufDescTable[frameNo].pageNo, frameNo);
 		}
+		bufDescTable[frameNo].pinCnt = 0;
 	}
-	catch (...){
+	catch (InvalidPageException e){
+		std::cout << "An attempt was made to access an unpin an invalid page in a file." << std::endl;
 	}
 
 }
 
 void BufMgr::flushFile(const File *file)
 {
+	uint32_t i;
+	for (i = 0; i < numBufs; i++) {
+		if (bufDescTable[i].file == file ) {
+			if (bufDescTable[i].pinCnt > 0) {
+				throw new PagePinnedException(file->filename(),bufDescTable[i].pageNo, bufDescTable[i].frameNo);
+			}
+			else if (bufDescTable[i].valid == 0) {
+				throw new BadBufferException(bufDescTable[i].frameNo, bufDescTable[i].dirty, bufDescTable[i].valid, bufDescTable[i].refbit);
+			}
+		}
+	}
+	
+	for (i = 0; i < numBufs; i++) {
+		if (bufDescTable[i].file == file && bufDescTable[i].dirty == true) {
+			Page page = file->readPage(bufDescTable[i].pageNo);
+			file->writePage(page);
+
+		}
+	}
+
+	// FileIterator it = new FileIterator(file);
+
+	// for (it = file->begin(); it != file->end(); ++it) {
+		
+	// }
 }
 
 void BufMgr::allocPage(File *file, PageId &pageNo, Page *&page)
