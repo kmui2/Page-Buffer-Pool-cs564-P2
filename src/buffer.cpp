@@ -56,11 +56,18 @@ BufMgr::~BufMgr()
 void BufMgr::advanceClock()
 {
 	clockHand = (clockHand + 1) % numBufs;
-
+	
 }
 
 void BufMgr::allocBuf(FrameId &frame)
 {
+	bool allPinned = true;
+	uint32_t i;
+	for (i = 0; i < numBufs; i++) {
+		if (bufDescTable[i].pinCnt == 0) {
+			allPinned = false;
+		}
+	} 
 	throw new BufferExceededException();
 }
 
@@ -111,9 +118,9 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 			bufDescTable[frameNo].dirty = true;
 		}
 		if (bufDescTable[frameNo].pinCnt == 0) {
-			throw new PageNotPinnedException(file->filename(), bufDescTable[frameNo].pageNo, frameNo);
+			throw new PageNotPinnedException(file->filename(), pageNo, frameNo);
 		}
-		bufDescTable[frameNo].pinCnt = 0;
+		bufDescTable[frameNo].pinCnt--;
 	}
 	catch (InvalidPageException e){
 		std::cout << "An attempt was made to access an unpin an invalid page in a file." << std::endl;
@@ -136,10 +143,14 @@ void BufMgr::flushFile(const File *file)
 	}
 	
 	for (i = 0; i < numBufs; i++) {
-		if (bufDescTable[i].file == file && bufDescTable[i].dirty == true) {
-			Page page = file->readPage(bufDescTable[i].pageNo);
-			file->writePage(page);
-
+		if (bufDescTable[i].file == file) {
+			File *file = bufDescTable[i].file;
+			if (bufDescTable[i].dirty == true) {
+				file->writePage(bufPool[i]);
+				bufDescTable[i].dirty = false;
+			}
+			hashTable->remove(file, bufDescTable[i].pageNo);
+			bufDescTable[i].Clear();
 		}
 	}
 
