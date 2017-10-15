@@ -76,9 +76,11 @@ void BufMgr::allocBuf(FrameId &frame)
 
 	std::cout << "clock algorithm attempt" << std::endl;
 	uint32_t ticks = 0;
-	bool found = true;
-	while (ticks < numBufs*2 && found) {
+	bool found = false;
+	while (ticks < numBufs*2 && !found) {
 		advanceClock();
+		bufDescTable[clockHand].Print();
+		std::cout << "clockHand = " << clockHand << std::endl;
 
 		if (!bufDescTable[clockHand].valid)
 			found = true;
@@ -131,6 +133,7 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *&page)
 		bufPool[frameNo] = file->readPage(pageNo);
 		hashTable->insert(file, pageNo, frameNo);
 		bufDescTable[frameNo].Set(file, pageNo);
+		std::cout << "read at framNo: " << frameNo << std::endl<<std::endl;
 		page = &bufPool[frameNo];
 	}
 
@@ -210,6 +213,7 @@ void BufMgr::allocPage(File *file, PageId &pageNo, Page *&page)
 	bufPool[frameNo] = newPage;
 	std::cout << "bufPool set newPage success" << std::endl;
 	std::cout << "set page to &bufPool[frameNo] attempt" << std::endl;
+	std::cout << "allocated at frame number: " << frameNo << std::endl<<std::endl;
 	page = &bufPool[frameNo];
 	std::cout << "set page to &bufPool[frameNo] success" << std::endl;
 	

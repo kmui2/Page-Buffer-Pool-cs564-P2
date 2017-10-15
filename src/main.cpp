@@ -222,8 +222,9 @@ void test2()
 	for (i = 0; i < num / 3; i++)
 	{
 		std::cout << "allocPage attempt" << std::endl;
-		bufMgr->allocPage(file2ptr, pageno2, page2);
-		std::cout << "allocPage success" << std::endl;
+		bufMgr->allocPage(file2ptr, pageno2, page2);	// all allocating to same
+		// std::cout<< "pageno2 = " << pageno2 << std::endl <<std::endl;
+		std::cout << "227 allocPage success" << std::endl;
 		sprintf((char *)tmpbuf, "test.2 Page %d %7.1f", pageno2, (float)pageno2);
 		std::cout << "rid2 insertRecord attempt" << std::endl;
 		rid2 = page2->insertRecord(tmpbuf);
@@ -241,7 +242,7 @@ void test2()
 		}
 
 		std::cout << "244 allocPage attempt" << std::endl;
-		bufMgr->allocPage(file3ptr, pageno3, page3);
+		bufMgr->allocPage(file3ptr, pageno3, page3);	// all allocating to same
 		std::cout << "246 allocPage success" << std::endl;
 		sprintf((char *)tmpbuf, "test.3 Page %d %7.1f", pageno3, (float)pageno3);
 		
@@ -258,6 +259,7 @@ void test2()
 		
 
 		bufMgr->readPage(file2ptr, pageno2, page2);	//lost the record here
+		// std::cout<< "pageno2 = " << pageno2 << std::endl<<std::endl;
 		std::cout << "printing record data in page2" << std::endl;
 		for (auto it = page2->begin(); it != page2->end(); ++it) {
 			std::cout << "Record data: " << *it << std::endl;
