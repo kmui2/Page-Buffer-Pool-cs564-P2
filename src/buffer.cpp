@@ -45,18 +45,13 @@ BufMgr::~BufMgr()
 {
 	for (FrameId i = 0; i < numBufs; i++)
 	{
-		std::cout << "deleting frameNo: " << i << std::endl;
 		if (bufDescTable[i].dirty && bufDescTable[i].valid) {
 			flushFile(bufDescTable[i].file);
 		}
 	}
-	std::cout << "finished deleting frmaeNos" << std::endl;
 	delete [] bufDescTable;
-	std::cout << "delete [] bufDescTable success" << std::endl;
 	delete [] bufPool;
-	std::cout << "delete [] bufPool success" << std::endl;
 	delete hashTable;
-	std::cout << "delete hashtable success" << std::endl;
 }
 
 void BufMgr::advanceClock()
@@ -67,7 +62,6 @@ void BufMgr::advanceClock()
 
 void BufMgr::allocBuf(FrameId &frame)
 {
-	std::cout<<"check for all pin attempt" << std::endl;
 	bool allPinned = true;
 	uint32_t i;
 	for (i = 0; i < numBufs; i++) {
@@ -78,15 +72,11 @@ void BufMgr::allocBuf(FrameId &frame)
 	if (allPinned)
 		throw BufferExceededException();
 
-	std::cout<<"check for all pin success" << std::endl;
 
-	std::cout << "clock algorithm attempt" << std::endl;
 	uint32_t ticks = 0;
 	bool found = false;
 	while (ticks < numBufs*2 && !found) {
 		advanceClock();
-		bufDescTable[clockHand].Print();
-		std::cout << "clockHand = " << clockHand << std::endl;
 
 		if (!bufDescTable[clockHand].valid)
 			found = true;
@@ -99,24 +89,14 @@ void BufMgr::allocBuf(FrameId &frame)
 		}
 		ticks++;
 	}
-	std::cout << "clock algorithm success" << std::endl;
 	
-	std::cout << "flush dirty page attempt" << std::endl;
 	if (bufDescTable[clockHand].dirty)
 		bufDescTable[clockHand].file->writePage(bufPool[clockHand]);
-	std::cout << "flush dirty page success" << std::endl;
 	
 	
-	std::cout << "remove page from hashtable attempt" << std::endl;
-	// std::cout << "pageNo : " << bufDescTable[clockHand].pageNo << std::endl;
-	// std::cout << "filename : " << bufDescTable[clockHand].file->filename() << std::endl;
 	if (bufDescTable[clockHand].valid)
 		hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
-	std::cout << "remove page from hashtable success" << std::endl;
-
-	std::cout << "bufDescTable[clockHand].Clear() attempt" << std::endl;
 	bufDescTable[clockHand].Clear();
-	std::cout << "bufDescTable[clockHand].Clear() success" << std::endl;
 	frame = clockHand;
 }
 
@@ -139,7 +119,6 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *&page)
 		bufPool[frameNo] = file->readPage(pageNo);
 		hashTable->insert(file, pageNo, frameNo);
 		bufDescTable[frameNo].Set(file, pageNo);
-		std::cout << "read at framNo: " << frameNo << std::endl<<std::endl;
 		page = &bufPool[frameNo];
 	}
 
@@ -152,7 +131,6 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 		hashTable->lookup(file, pageNo, frameNo);
 		if (dirty)
 			bufDescTable[frameNo].dirty = true;
-		bufDescTable[frameNo].Print();
 		if (bufDescTable[frameNo].pinCnt == 0)
 			throw PageNotPinnedException(file->filename(), pageNo, frameNo);
 
@@ -189,39 +167,18 @@ void BufMgr::flushFile(const File *file)
 			bufDescTable[i].Clear();
 		}
 	}
-
-	// FileIterator it = new FileIterator(file);
-
-	// for (it = file->begin(); it != file->end(); ++it) {
-		
-	// }
 }
 
 void BufMgr::allocPage(File *file, PageId &pageNo, Page *&page)
 {
-	std::cout<< "file->allocPage attempt" << std::endl;
 	Page newPage = file->allocatePage();
-	std::cout<< "file->allocPage success" << std::endl;
 	FrameId frameNo;
-	std::cout << "allocBuf attempt" << std::endl;
 	allocBuf(frameNo);
-	std::cout << "allocBuf success" << std::endl;
-	std::cout << "newPage.page_number() attempt" << std::endl;
 	pageNo = newPage.page_number();
-	std::cout << "newPage.page_number() success" << std::endl;
-	std::cout << "hastable insert attempt" << std::endl;
 	hashTable->insert(file, pageNo, frameNo);
-	std::cout << "hastable insert success" << std::endl;
-	std:: cout << "bufDescTable Set attempt" << std::endl;
 	bufDescTable[frameNo].Set(file, pageNo);
-	std:: cout << "bufDescTable Set success" << std::endl;
-	std::cout << "bufPool set newPage attempt" << std::endl;
 	bufPool[frameNo] = newPage;
-	std::cout << "bufPool set newPage success" << std::endl;
-	std::cout << "set page to &bufPool[frameNo] attempt" << std::endl;
-	std::cout << "allocated at frame number: " << frameNo << std::endl<<std::endl;
 	page = &bufPool[frameNo];
-	std::cout << "set page to &bufPool[frameNo] success" << std::endl;
 	
 }
 
@@ -247,13 +204,11 @@ void BufMgr::printSelf(void)
 	for (std::uint32_t i = 0; i < numBufs; i++)
 	{
 		tmpbuf = &(bufDescTable[i]);
-		std::cout << "FrameNo:" << i << " ";
 		tmpbuf->Print();
 
 		if (tmpbuf->valid == true)
 			validFrames++;
 	}
 
-	std::cout << "Total Number of Valid Frames:" << validFrames << "\n";
 }
 }
