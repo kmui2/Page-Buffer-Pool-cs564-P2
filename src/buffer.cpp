@@ -61,6 +61,7 @@ void BufMgr::advanceClock()
 
 void BufMgr::allocBuf(FrameId &frame)
 {
+	std::cout<<"check for all pin attempt" << std::endl;
 	bool allPinned = true;
 	uint32_t i;
 	for (i = 0; i < numBufs; i++) {
@@ -71,7 +72,9 @@ void BufMgr::allocBuf(FrameId &frame)
 	if (allPinned)
 		throw new BufferExceededException();
 
+	std::cout<<"check for all pin success" << std::endl;
 
+	std::cout << "clock algorithm attempt" << std::endl;
 	uint32_t ticks = 0;
 	bool found = true;
 	while (ticks < numBufs*2 && found) {
@@ -88,12 +91,24 @@ void BufMgr::allocBuf(FrameId &frame)
 		}
 		ticks++;
 	}
+	std::cout << "clock algorithm success" << std::endl;
 	
+	std::cout << "flush dirty page attempt" << std::endl;
 	if (bufDescTable[clockHand].dirty)
 		bufDescTable[clockHand].file->writePage(bufPool[clockHand]);
+	std::cout << "flush dirty page success" << std::endl;
 	
-	hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+	
+	std::cout << "remove page from hashtable attempt" << std::endl;
+	// std::cout << "pageNo : " << bufDescTable[clockHand].pageNo << std::endl;
+	// std::cout << "filename : " << bufDescTable[clockHand].file->filename() << std::endl;
+	if (bufDescTable[clockHand].valid)
+		hashTable->remove(bufDescTable[clockHand].file, bufDescTable[clockHand].pageNo);
+	std::cout << "remove page from hashtable success" << std::endl;
+
+	std::cout << "bufDescTable[clockHand].Clear() attempt" << std::endl;
 	bufDescTable[clockHand].Clear();
+	std::cout << "bufDescTable[clockHand].Clear() success" << std::endl;
 	frame = clockHand;
 }
 
@@ -106,9 +121,9 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *&page)
 	FrameId frameNo = 0;
 	try { 
 		hashTable->lookup(file, pageNo, frameNo);
-		bufDescTable[frameNo].refbit = false;
+		bufDescTable[frameNo].refbit = true;
 		bufDescTable[frameNo].pinCnt++;
-		*page = bufPool[frameNo];
+		page = &bufPool[frameNo];
 
 	}
 	catch (HashNotFoundException e){
@@ -116,7 +131,7 @@ void BufMgr::readPage(File *file, const PageId pageNo, Page *&page)
 		bufPool[frameNo] = file->readPage(pageNo);
 		hashTable->insert(file, pageNo, frameNo);
 		bufDescTable[frameNo].Set(file, pageNo);
-		*page = bufPool[frameNo];
+		page = &bufPool[frameNo];
 	}
 
 }
@@ -126,12 +141,12 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 	try { 
 		FrameId frameNo = 0;
 		hashTable->lookup(file, pageNo, frameNo);
-		if (dirty) {
+		if (dirty)
 			bufDescTable[frameNo].dirty = true;
-		}
-		if (bufDescTable[frameNo].pinCnt == 0) {
+
+		if (bufDescTable[frameNo].pinCnt == 0)
 			throw new PageNotPinnedException(file->filename(), pageNo, frameNo);
-		}
+
 		bufDescTable[frameNo].pinCnt--;
 	}
 	catch (InvalidPageException e){
@@ -175,14 +190,29 @@ void BufMgr::flushFile(const File *file)
 
 void BufMgr::allocPage(File *file, PageId &pageNo, Page *&page)
 {
+	std::cout<< "file->allocPage attempt" << std::endl;
 	Page newPage = file->allocatePage();
+	std::cout<< "file->allocPage success" << std::endl;
 	FrameId frameNo;
+	std::cout << "allocBuf attempt" << std::endl;
 	allocBuf(frameNo);
+	std::cout << "allocBuf success" << std::endl;
+	std::cout << "newPage.page_number() attempt" << std::endl;
 	pageNo = newPage.page_number();
+	std::cout << "newPage.page_number() success" << std::endl;
+	std::cout << "hastable insert attempt" << std::endl;
 	hashTable->insert(file, pageNo, frameNo);
+	std::cout << "hastable insert success" << std::endl;
+	std:: cout << "bufDescTable Set attempt" << std::endl;
 	bufDescTable[frameNo].Set(file, pageNo);
+	std:: cout << "bufDescTable Set success" << std::endl;
+	std::cout << "bufPool set newPage attempt" << std::endl;
 	bufPool[frameNo] = newPage;
+	std::cout << "bufPool set newPage success" << std::endl;
+	std::cout << "set page to &bufPool[frameNo] attempt" << std::endl;
 	page = &bufPool[frameNo];
+	std::cout << "set page to &bufPool[frameNo] success" << std::endl;
+	
 }
 
 void BufMgr::disposePage(File *file, const PageId PageNo)
