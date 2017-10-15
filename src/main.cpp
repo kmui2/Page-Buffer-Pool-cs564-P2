@@ -160,21 +160,33 @@ void testBufMgr()
 	test5();
 	std::cout <<std::endl << "test6 attempt" << std::endl;
 	test6();
-	std::cout <<std::endl << "test7 attempt" << std::endl;
+	std::cout <<std::endl << "ALL TESTS PASSED" << std::endl;
 
 	//Close files before deleting them
+	std::cout << "closing file 1" << std::endl;
 	file1.~File();
+	std::cout << "closing file 2" << std::endl;
 	file2.~File();
+	std::cout << "closing file 3" << std::endl;
 	file3.~File();
+	std::cout << "closing file 4" << std::endl;
 	file4.~File();
+	std::cout << "closing file 5" << std::endl;
 	file5.~File();
+	std::cout << "finished closing all files" << std::endl;
 
 	//Delete files
+	std::cout << "removing file 1" << std::endl;
 	File::remove(filename1);
+	std::cout << "removing file 2" << std::endl;
 	File::remove(filename2);
+	std::cout << "removing file 3" << std::endl;
 	File::remove(filename3);
+	std::cout << "removing file 4" << std::endl;
 	File::remove(filename4);
+	std::cout << "removing file 5" << std::endl;
 	File::remove(filename5);
+	std::cout << "finished removing all files" << std::endl;
 
 	delete bufMgr;
 
@@ -324,16 +336,23 @@ void test3()
 }
 
 void test4()
-{
+{	
+	std::cout << "328 allocPage attempt" << std::endl;
 	bufMgr->allocPage(file4ptr, i, page);
+	std::cout << "330 allocPage success" << std::endl;
+	std::cout << "331 unPinPage attempt" << std::endl;
 	bufMgr->unPinPage(file4ptr, i, true);
+	std::cout << "333 unPinPage success" << std::endl;
 	try
 	{
+		std::cout << "336 unPinPage attempt" << std::endl;
 		bufMgr->unPinPage(file4ptr, i, false);
+		std::cout << "338 unPinPage success" << std::endl;
 		PRINT_ERROR("ERROR :: Page is already unpinned. Exception should have been thrown before execution reaches this point.");
 	}
 	catch (PageNotPinnedException e)
 	{
+		std::cout << "PageNotPinnedException was thrown" << std::endl;
 	}
 
 	std::cout << "Test 4 passed"

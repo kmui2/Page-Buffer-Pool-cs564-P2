@@ -45,12 +45,18 @@ BufMgr::~BufMgr()
 {
 	for (FrameId i = 0; i < numBufs; i++)
 	{
-		if (bufDescTable[i].dirty) {
-			BufMgr::flushFile(bufDescTable[i].file);
+		std::cout << "deleting frameNo: " << i << std::endl;
+		if (bufDescTable[i].dirty && bufDescTable[i].valid) {
+			flushFile(bufDescTable[i].file);
 		}
 	}
-	delete bufDescTable;
-	delete bufPool;
+	std::cout << "finished deleting frmaeNos" << std::endl;
+	delete [] bufDescTable;
+	std::cout << "delete [] bufDescTable success" << std::endl;
+	delete [] bufPool;
+	std::cout << "delete [] bufPool success" << std::endl;
+	delete hashTable;
+	std::cout << "delete hashtable success" << std::endl;
 }
 
 void BufMgr::advanceClock()
@@ -70,7 +76,7 @@ void BufMgr::allocBuf(FrameId &frame)
 		}
 	} 
 	if (allPinned)
-		throw new BufferExceededException();
+		throw BufferExceededException();
 
 	std::cout<<"check for all pin success" << std::endl;
 
@@ -146,9 +152,9 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 		hashTable->lookup(file, pageNo, frameNo);
 		if (dirty)
 			bufDescTable[frameNo].dirty = true;
-
+		bufDescTable[frameNo].Print();
 		if (bufDescTable[frameNo].pinCnt == 0)
-			throw new PageNotPinnedException(file->filename(), pageNo, frameNo);
+			throw PageNotPinnedException(file->filename(), pageNo, frameNo);
 
 		bufDescTable[frameNo].pinCnt--;
 	}
@@ -164,10 +170,10 @@ void BufMgr::flushFile(const File *file)
 	for (i = 0; i < numBufs; i++) {
 		if (bufDescTable[i].file == file ) {
 			if (bufDescTable[i].pinCnt > 0) {
-				throw new PagePinnedException(file->filename(),bufDescTable[i].pageNo, bufDescTable[i].frameNo);
+				throw PagePinnedException(file->filename(),bufDescTable[i].pageNo, bufDescTable[i].frameNo);
 			}
 			else if (bufDescTable[i].valid == 0) {
-				throw new BadBufferException(bufDescTable[i].frameNo, bufDescTable[i].dirty, bufDescTable[i].valid, bufDescTable[i].refbit);
+				throw BadBufferException(bufDescTable[i].frameNo, bufDescTable[i].dirty, bufDescTable[i].valid, bufDescTable[i].refbit);
 			}
 		}
 	}
