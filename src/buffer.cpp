@@ -102,9 +102,9 @@ void BufMgr::allocBuf(FrameId &frame)
 
 void BufMgr::readPage(File *file, const PageId pageNo, Page *&page)
 {
-	badgerdb::Page new_page;
-	const badgerdb::RecordId& rid = new_page.insertRecord("hello, world!");
-	new_page.getRecord(rid); // returns "hello, world!"
+	// badgerdb::Page new_page;
+	// const badgerdb::RecordId& rid = new_page.insertRecord("hello, world!");
+	// new_page.getRecord(rid); // returns "hello, world!"
 
 	FrameId frameNo = 0;
 	try { 
