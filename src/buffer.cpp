@@ -83,12 +83,16 @@ void BufMgr::allocBuf(FrameId &frame)
 	while (ticks < numBufs*2 && !found) {
 		advanceClock();
 
+		// immediately select frame if invalid
 		if (!bufDescTable[clockHand].valid)
 			found = true;
 
+		// clear refbits found that are set
 		else if (bufDescTable[clockHand].refbit) {
 			bufDescTable[clockHand].refbit = false; 
-
+		}
+		// found valid frame that is not pinned with refbit not set
+		else {
 			if (bufDescTable[clockHand].pinCnt == 0)
 				found = true;
 		}
@@ -107,11 +111,7 @@ void BufMgr::allocBuf(FrameId &frame)
 	frame = clockHand;
 }
 
-void BufMgr::readPage(File *file, const PageId pageNo, Page *&page)
-{
-	// badgerdb::Page new_page;
-	// const badgerdb::RecordId& rid = new_page.insertRecord("hello, world!");
-	// new_page.getRecord(rid); // returns "hello, world!"
+void BufMgr::readPage(File *file, const PageId pageNo, Page *&page) {
 
 	FrameId frameNo = 0;
 	try { 
