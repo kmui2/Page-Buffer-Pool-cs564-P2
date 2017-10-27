@@ -88,14 +88,13 @@ void BufMgr::allocBuf(FrameId &frame)
 			found = true;
 
 		// clear refbits found that are set
-		else if (bufDescTable[clockHand].refbit) {
+		else if (bufDescTable[clockHand].refbit)
 			bufDescTable[clockHand].refbit = false; 
-		}
+		
 		// found valid frame that is not pinned with refbit not set
-		else {
-			if (bufDescTable[clockHand].pinCnt == 0)
+		else if (bufDescTable[clockHand].pinCnt == 0)
 				found = true;
-		}
+		
 		ticks++;
 	}
 	
