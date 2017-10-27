@@ -9,6 +9,7 @@
 #include "page_iterator.h"
 #include "exceptions/file_not_found_exception.h"
 #include "exceptions/invalid_page_exception.h"
+#include "exceptions/hash_not_found_exception.h"
 #include "exceptions/page_not_pinned_exception.h"
 #include "exceptions/page_pinned_exception.h"
 #include "exceptions/buffer_exceeded_exception.h"
@@ -25,12 +26,12 @@
 using namespace badgerdb;
 
 const PageId num = 100;
-PageId pid[num], pageno1, pageno2, pageno3, i;
-RecordId rid[num], rid2, rid3;
-Page *page, *page2, *page3;
+PageId pid[num], pageno1, pageno2, pageno3, pageno4, i;
+RecordId rid[num], rid2, rid3, rid4;
+Page *page, *page2, *page3, *page4;
 char tmpbuf[100];
 BufMgr *bufMgr;
-File *file1ptr, *file2ptr, *file3ptr, *file4ptr, *file5ptr;
+File *file1ptr, *file2ptr, *file3ptr, *file4ptr, *file5ptr, *file6ptr;
 
 void test1();
 void test2();
@@ -38,6 +39,9 @@ void test3();
 void test4();
 void test5();
 void test6();
+void test7();
+void test8();
+void test9();
 void testBufMgr();
 
 int main()
@@ -118,6 +122,7 @@ void testBufMgr()
 	const std::string &filename3 = "test.3";
 	const std::string &filename4 = "test.4";
 	const std::string &filename5 = "test.5";
+	const std::string &filename6 = "test.6";
 
 	try
 	{
@@ -126,6 +131,7 @@ void testBufMgr()
 		File::remove(filename3);
 		File::remove(filename4);
 		File::remove(filename5);
+		File::remove(filename6);
 	}
 	catch (FileNotFoundException e)
 	{
@@ -136,12 +142,14 @@ void testBufMgr()
 	File file3 = File::create(filename3);
 	File file4 = File::create(filename4);
 	File file5 = File::create(filename5);
+	File file6 = File::create(filename6);
 
 	file1ptr = &file1;
 	file2ptr = &file2;
 	file3ptr = &file3;
 	file4ptr = &file4;
 	file5ptr = &file5;
+	file6ptr = &file6;
 
 	//Test buffer manager
 	//Comment tests which you do not wish to run now. Tests are dependent on their preceding tests. So, they have to be run in the following order.
@@ -152,6 +160,9 @@ void testBufMgr()
 	test4();
 	test5();
 	test6();
+	test7();
+	test8();
+	test9();
 
 	//Close files before deleting them
 	file1.~File();
@@ -159,6 +170,7 @@ void testBufMgr()
 	file3.~File();
 	file4.~File();
 	file5.~File();
+	file6.~File();
 
 	//Delete files
 	File::remove(filename1);
@@ -166,6 +178,7 @@ void testBufMgr()
 	File::remove(filename3);
 	File::remove(filename4);
 	File::remove(filename5);
+	File::remove(filename6);
 
 	delete bufMgr;
 
@@ -340,4 +353,77 @@ void test6()
 		bufMgr->unPinPage(file1ptr, i, true);
 
 	bufMgr->flushFile(file1ptr);
+}
+
+void test7()
+//same as test 1, but we flush the file in between
+
+{	//Allocating pages in a file...
+	for (i = 0; i < num; i++)
+	{
+		bufMgr->allocPage(file4ptr, pid[i], page);
+		sprintf((char *)tmpbuf, "test.7 Page %d %7.1f", pid[i], (float)pid[i]);
+		rid[i] = page->insertRecord(tmpbuf);
+		bufMgr->unPinPage(file4ptr, pid[i], true);
+
+	}
+	bufMgr->flushFile(file4ptr);
+	try
+	{
+		//Reading pages back...
+		for (i = 0; i < num; i++)
+		{
+			bufMgr->readPage(file4ptr, pid[i], page);
+			sprintf((char *)&tmpbuf, "test.7 Page %d %7.1f", pid[i], (float)pid[i]);
+			if (strncmp(page->getRecord(rid[i]).c_str(), tmpbuf, strlen(tmpbuf)) != 0)
+			{
+				PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
+			}
+		}
+
+	}
+	catch (...)
+	{
+		PRINT_ERROR("ERROR :: Info should still be in buffer.");
+	}
+
+	std::cout << "Test 7 passed"
+			  << "\n";
+}
+
+void test8()
+{
+	//unpin all pages, flush the file, then reallocate and re-unpin the pages
+	for (i = 0; i < num; i++)
+	{
+		bufMgr->unPinPage(file4ptr, pid[i], false);
+
+	}
+	bufMgr->flushFile(file4ptr);
+	for (i = 0; i < num; i++)
+	{
+		bufMgr->allocPage(file4ptr, pid[i], page);
+		sprintf((char *)tmpbuf, "test.7 Page %d %7.1f", pid[i], (float)pid[i]);
+		rid[i] = page->insertRecord(tmpbuf);
+		bufMgr->unPinPage(file4ptr, pid[i], false);
+	}
+
+	std::cout << "Test 8 passed"
+			  << "\n";
+}
+
+void test9()
+{
+	//flush the file twice in a row
+	try {
+		bufMgr->flushFile(file4ptr);
+		bufMgr->flushFile(file4ptr);
+
+	}
+	catch (...) {
+		PRINT_ERROR("ERROR :: We should be allowed to flush twice.");
+	}
+
+	std::cout << "Test 9 passed"
+			  << "\n";
 }
