@@ -136,7 +136,7 @@ void testBufMgr()
 	catch (FileNotFoundException e)
 	{
 	}
-
+	
 	File file1 = File::create(filename1);
 	File file2 = File::create(filename2);
 	File file3 = File::create(filename3);
@@ -204,7 +204,7 @@ void test1()
 	{
 		bufMgr->readPage(file1ptr, pid[i], page);
 		sprintf((char *)&tmpbuf, "test.1 Page %d %7.1f", pid[i], (float)pid[i]);
-		if (strncmp(page->getRecord(rid[i]).c_str(), tmpbuf, strlen(tmpbuf)) != 0)
+		if (strncmp(page->getRecord(rid[i]).c_str(), tmpbuf, strlen(tmpbuf)) != 0)//check if the value and page contents match.
 		{
 			PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
 		}
@@ -221,15 +221,15 @@ void test2()
 
 	for (i = 0; i < num / 3; i++)
 	{
-		bufMgr->allocPage(file2ptr, pageno2, page2);	
+		bufMgr->allocPage(file2ptr, pageno2, page2); 
 		sprintf((char *)tmpbuf, "test.2 Page %d %7.1f", pageno2, (float)pageno2);
 		rid2 = page2->insertRecord(tmpbuf);
 
-		int index = random() % num;
+		int index = random() % num
 		pageno1 = pid[index];
 		bufMgr->readPage(file1ptr, pageno1, page);
 		sprintf((char *)tmpbuf, "test.1 Page %d %7.1f", pageno1, (float)pageno1);
-		if (strncmp(page->getRecord(rid[index]).c_str(), tmpbuf, strlen(tmpbuf)) != 0)
+		if (strncmp(page->getRecord(rid[index]).c_str(), tmpbuf, strlen(tmpbuf)) != 0)//check if page # and value match
 		{
 			PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
 		}
@@ -241,17 +241,17 @@ void test2()
 
 		
 
-		bufMgr->readPage(file2ptr, pageno2, page2);	
+		bufMgr->readPage(file2ptr, pageno2, page2);
 		
 
 		sprintf((char *)&tmpbuf, "test.2 Page %d %7.1f", pageno2, (float)pageno2);
-		if (strncmp(page2->getRecord(rid2).c_str(), tmpbuf, strlen(tmpbuf)) != 0)
+		if (strncmp(page2->getRecord(rid2).c_str(), tmpbuf, strlen(tmpbuf)) != 0)//check if page # and value match
 		{
 			PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
 		}
 		bufMgr->readPage(file3ptr, pageno3, page3);
 		sprintf((char *)&tmpbuf, "test.3 Page %d %7.1f", pageno3, (float)pageno3);
-		if (strncmp(page3->getRecord(rid3).c_str(), tmpbuf, strlen(tmpbuf)) != 0)
+		if (strncmp(page3->getRecord(rid3).c_str(), tmpbuf, strlen(tmpbuf)) != 0)//check if page # and value match
 		{
 			PRINT_ERROR("ERROR :: CONTENTS DID NOT MATCH");
 		}
@@ -273,6 +273,7 @@ void test2()
 
 void test3()
 {
+	//Checks if the file exists, if not then throw exception.
 	try
 	{
 		bufMgr->readPage(file4ptr, 1, page);
@@ -288,6 +289,7 @@ void test3()
 
 void test4()
 {	
+	//Testing whether page is pinned or not.
 	bufMgr->allocPage(file4ptr, i, page);
 	bufMgr->unPinPage(file4ptr, i, true);
 	try
@@ -305,6 +307,7 @@ void test4()
 
 void test5()
 {
+	//Tests whether there are any frames left for allocation.
 	for (i = 0; i < num; i++)
 	{
 		bufMgr->allocPage(file5ptr, pid[i], page);
