@@ -209,7 +209,7 @@ void BufMgr::disposePage(File *file, const PageId PageNo)
 		bufDescTable[frameNo].Clear();
 		hashTable->remove(file, PageNo);
 	}	
-	catch (HashNotFoundException) {
+	catch (HashNotFoundException e) {
 		// std::cout << "HashNotFoundException BufMgr::disposePage(File *file, const PageId PageNo)" << std::endl;
 	}
 	file->deletePage(PageNo);
