@@ -41,6 +41,7 @@ void test5();
 void test6();
 void test7();
 void test8();
+void test9();
 void testBufMgr();
 
 int main()
@@ -161,6 +162,7 @@ void testBufMgr()
 	test6();
 	test7();
 	test8();
+	test9();
 
 	//Close files before deleting them
 	file1.~File();
@@ -392,7 +394,6 @@ void test7()
 void test8()
 {
 	//unpin all pages, flush the file, then reallocate and re-unpin the pages
-	//then, after that is done, try unpinning the already unpinned pages
 	for (i = 0; i < num; i++)
 	{
 		bufMgr->unPinPage(file4ptr, pid[i], false);
@@ -406,16 +407,23 @@ void test8()
 		rid[i] = page->insertRecord(tmpbuf);
 		bufMgr->unPinPage(file4ptr, pid[i], false);
 	}
-	//attempt to unpin non-pinned pages
-	try {
-		for (i = 0; i < num; i++) {
-			bufMgr->unPinPage(file4ptr, pid[i], true);
-		}
-		PRINT_ERROR("ERROR :: Pages shouldn't be able to be unpinned while not pinned.");
-	}
-	catch (PageNotPinnedException e) {
-	}
 
 	std::cout << "Test 8 passed"
+			  << "\n";
+}
+
+void test9()
+{
+	//flush the file twice in a row
+	try {
+		bufMgr->flushFile(file4ptr);
+		bufMgr->flushFile(file4ptr);
+
+	}
+	catch (...) {
+		PRINT_ERROR("ERROR :: We should be allowed to flush twice.");
+	}
+
+	std::cout << "Test 9 passed"
 			  << "\n";
 }
